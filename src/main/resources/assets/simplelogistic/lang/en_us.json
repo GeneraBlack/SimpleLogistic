@@ -1,0 +1,9 @@
+{
+    "block.simplelogistic.item_pipe": "Item Pipe",
+    "block.simplelogistic.fluid_pipe": "Fluid Pipe",
+    "block.simplelogistic.energy_pipe": "Energy Pipe",
+    "block.simplelogistic.universal_pipe": "Universal Pipe",
+    "block.simplelogistic.dimensional_node": "Dimensional Node",
+    "item.simplelogistic.wrench": "Pipe Wrench",
+    "itemGroup.simplelogistic": "Simple Logistic"
+}

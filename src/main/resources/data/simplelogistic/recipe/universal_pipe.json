@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "simplelogistic:item_pipe"
+    },
+    {
+      "item": "simplelogistic:fluid_pipe"
+    },
+    {
+      "item": "simplelogistic:energy_pipe"
+    },
+    {
+      "item": "minecraft:redstone"
+    }
+  ],
+  "result": {
+    "id": "simplelogistic:universal_pipe",
+    "count": 4
+  }
+}

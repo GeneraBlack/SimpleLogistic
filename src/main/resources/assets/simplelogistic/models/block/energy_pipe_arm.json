@@ -1,0 +1,6 @@
+{
+  "parent": "simplelogistic:block/pipe_arm",
+  "textures": {
+    "texture": "simplelogistic:block/energy_pipe"
+  }
+}

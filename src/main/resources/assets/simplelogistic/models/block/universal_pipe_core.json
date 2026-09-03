@@ -1,0 +1,6 @@
+{
+  "parent": "simplelogistic:block/pipe_core",
+  "textures": {
+    "texture": "simplelogistic:block/universal_pipe"
+  }
+}

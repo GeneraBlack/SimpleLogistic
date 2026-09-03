@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "OEO",
+    "PMP",
+    "OEO"
+  ],
+  "key": {
+    "O": "minecraft:obsidian",
+    "E": "minecraft:ender_eye",
+    "P": "simplelogistic:universal_pipe",
+    "M": "minecraft:diamond"
+  },
+  "result": {
+    "id": "simplelogistic:dimensional_node",
+    "count": 2
+  }
+}

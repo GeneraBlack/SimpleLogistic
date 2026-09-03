@@ -1,0 +1,9 @@
+{
+    "block.simplelogistic.item_pipe": "Gegenstands-Röhre",
+    "block.simplelogistic.fluid_pipe": "Flüssigkeits-Röhre",
+    "block.simplelogistic.energy_pipe": "Energie-Röhre",
+    "block.simplelogistic.universal_pipe": "Universal-Röhre",
+    "block.simplelogistic.dimensional_node": "Dimensions-Knoten",
+    "item.simplelogistic.wrench": "Rohrzange",
+    "itemGroup.simplelogistic": "Simple Logistic"
+}

@@ -1,0 +1,88 @@
+name: Release & Publish
+
+# Workflow wird ausgelöst wenn ein Tag gepusht wird: v1.0.0, v1.2.3, etc.
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  MINECRAFT_VERSION: '1.21.1'
+  MOD_NAME: 'Simple Logistic'
+  JAVA_VERSION: '21'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build
+        run: ./gradlew build -x test
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Find JAR file
+        id: find_jar
+        run: |
+          JAR_FILE=$(find build/libs -name "simplelogistic-*.jar" ! -name "*-sources.jar" | head -1)
+          echo "JAR_PATH=$JAR_FILE" >> $GITHUB_OUTPUT
+          echo "JAR_NAME=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
+
+      # ──────────────────────────────────────
+      # GitHub Release
+      # ──────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "${{ env.MOD_NAME }} v${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## ${{ env.MOD_NAME }} v${{ steps.version.outputs.VERSION }}
+            
+            **Minecraft**: ${{ env.MINECRAFT_VERSION }}
+            **Mod Loader**: NeoForge
+            
+            ### Installation
+            1. Download the `.jar` file below
+            2. Place it in your `mods/` folder
+            3. Launch Minecraft with NeoForge ${{ env.MINECRAFT_VERSION }}
+          files: ${{ steps.find_jar.outputs.JAR_PATH }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ──────────────────────────────────────
+      # CurseForge Upload
+      # ──────────────────────────────────────
+      - name: Publish to CurseForge
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          curseforge-id: ${{ secrets.CURSEFORGE_PROJECT_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+          name: "${{ env.MOD_NAME }} v${{ steps.version.outputs.VERSION }}"
+          version: ${{ steps.version.outputs.VERSION }}
+          version-type: release
+          
+          files: ${{ steps.find_jar.outputs.JAR_PATH }}
+          
+          loaders: neoforge
+          game-versions: ${{ env.MINECRAFT_VERSION }}
+          
+          changelog: "Release v${{ steps.version.outputs.VERSION }} for Minecraft ${{ env.MINECRAFT_VERSION }}"
