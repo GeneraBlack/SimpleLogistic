@@ -109,9 +109,9 @@ public class NetworkManager {
      */
     private static boolean hasMachineCapability(ServerLevel level, BlockPos pos, Direction fromDir) {
         Direction accessDir = fromDir.getOpposite();
-        return level.getCapability(Capabilities.ItemHandler.BLOCK, pos, accessDir) != null
-            || level.getCapability(Capabilities.FluidHandler.BLOCK, pos, accessDir) != null
-            || level.getCapability(Capabilities.EnergyStorage.BLOCK, pos, accessDir) != null;
+        return level.getCapability(Capabilities.Item.BLOCK, pos, accessDir) != null
+            || level.getCapability(Capabilities.Fluid.BLOCK, pos, accessDir) != null
+            || level.getCapability(Capabilities.Energy.BLOCK, pos, accessDir) != null;
     }
 
     /**

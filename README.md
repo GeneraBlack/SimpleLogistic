@@ -1,6 +1,6 @@
 # Simple Logistic
 
-**A TPS-friendly proportional pipe network mod for Minecraft 1.21.1 (NeoForge)**
+**A TPS-friendly proportional pipe network mod for Minecraft 26.2 (NeoForge)**
 
 Simple Logistic adds a lightweight but powerful logistics system to Minecraft. Transport items, fluids, and energy through a clean pipe network with proportional distribution, priority routing, and cross-dimensional support — all without killing your server's TPS.
 
@@ -147,9 +147,9 @@ Simple Logistic is designed to work alongside popular tech mods:
 
 ## 📋 Requirements
 
-- **Minecraft**: 1.21.1
-- **NeoForge**: 21.1.48+
-- **Java**: 21+
+- **Minecraft**: 26.2
+- **NeoForge**: 26.2.0.67+
+- **Java**: 25+
 
 ---
 

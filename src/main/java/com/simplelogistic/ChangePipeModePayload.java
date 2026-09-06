@@ -5,7 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -13,7 +13,7 @@ import java.util.List;
 
 public record ChangePipeModePayload(BlockPos pos, Direction side, int operationIndex, int newModeOrdinal, int targetSideOrdinal, int transferTypeOrdinal) implements CustomPacketPayload {
     
-    public static final Type<ChangePipeModePayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SimpleLogistic.MODID, "change_pipe_mode"));
+    public static final Type<ChangePipeModePayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath(SimpleLogistic.MODID, "change_pipe_mode"));
 
     public static final StreamCodec<FriendlyByteBuf, ChangePipeModePayload> STREAM_CODEC = CustomPacketPayload.codec(
         ChangePipeModePayload::write,

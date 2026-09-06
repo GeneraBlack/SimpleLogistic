@@ -5,12 +5,14 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -46,8 +48,8 @@ public class PipeBlock extends Block implements EntityBlock {
 
     private final PipeTier tier;
 
-    public PipeBlock(PipeTier tier) {
-        super(BlockBehaviour.Properties.of().strength(2.0f).noOcclusion());
+    public PipeBlock(BlockBehaviour.Properties properties, PipeTier tier) {
+        super(properties.strength(2.0f).noOcclusion());
         this.tier = tier;
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(NORTH, false).setValue(EAST, false)
@@ -76,7 +78,7 @@ public class PipeBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
+    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess tickAccess, BlockPos currentPos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
         if (level instanceof Level realLevel) {
             return state.setValue(PROPERTY_BY_DIRECTION.get(direction), canConnectTo(realLevel, currentPos, direction));
         }
@@ -101,13 +103,13 @@ public class PipeBlock extends Block implements EntityBlock {
 
         // 3. Verbindet sich mit Maschinen (Inventare, Tanks, Energie), basierend auf dem Tier
         if (tier == PipeTier.ITEM || tier == PipeTier.UNIVERSAL) {
-            if (level.getCapability(Capabilities.ItemHandler.BLOCK, neighborPos, dir.getOpposite()) != null) return true;
+            if (level.getCapability(Capabilities.Item.BLOCK, neighborPos, dir.getOpposite()) != null) return true;
         }
         if (tier == PipeTier.FLUID || tier == PipeTier.UNIVERSAL) {
-            if (level.getCapability(Capabilities.FluidHandler.BLOCK, neighborPos, dir.getOpposite()) != null) return true;
+            if (level.getCapability(Capabilities.Fluid.BLOCK, neighborPos, dir.getOpposite()) != null) return true;
         }
         if (tier == PipeTier.ENERGY || tier == PipeTier.UNIVERSAL) {
-            if (level.getCapability(Capabilities.EnergyStorage.BLOCK, neighborPos, dir.getOpposite()) != null) return true;
+            if (level.getCapability(Capabilities.Energy.BLOCK, neighborPos, dir.getOpposite()) != null) return true;
         }
 
         return false;
@@ -141,18 +143,14 @@ public class PipeBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock())) {
-            if (level instanceof ServerLevel serverLevel) {
-                NetworkManager.unregisterPipe(serverLevel, pos);
-            }
-        }
-        super.onRemove(state, level, pos, newState, isMoving);
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean isMoving) {
+        NetworkManager.unregisterPipe(level, pos);
+        super.affectNeighborsAfterRemoval(state, level, pos, isMoving);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             BlockEntity entity = level.getBlockEntity(pos);
             if (entity instanceof PipeBlockEntity pipe) {
                 List<Direction> machineDirs = pipe.getMachineDirections();
@@ -175,6 +173,6 @@ public class PipeBlock extends Block implements EntityBlock {
                 });
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 }

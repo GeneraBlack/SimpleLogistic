@@ -7,9 +7,9 @@ on:
       - 'v*'
 
 env:
-  MINECRAFT_VERSION: '1.21.1'
+  MINECRAFT_VERSION: '26.2'
   MOD_NAME: 'Simple Logistic'
-  JAVA_VERSION: '21'
+  JAVA_VERSION: '25'
 
 permissions:
   contents: write

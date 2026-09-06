@@ -35,13 +35,13 @@ public class PipeWrenchItem extends Item {
             return InteractionResult.PASS;
         }
 
-        if (!level.isClientSide && player != null) {
+        if (!level.isClientSide() && player != null) {
             ServerLevel serverLevel = (ServerLevel) level;
 
             if (player.isShiftKeyDown()) {
                 // 1. Shift + Rechtsklick: Instant-Harvest & Direkt ins Inventar
                 ItemStack dropStack = new ItemStack(state.getBlock().asItem());
-                level.removeBlock(pos, false); // Trigger PipeBlock.onRemove → unregistriert Pipe automatisch
+                level.removeBlock(pos, false); // Trigger PipeBlock.affectNeighborsAfterRemoval → unregistriert Pipe automatisch
                 level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_IRON.value(), SoundSource.BLOCKS, 1.0f, 1.0f);
 
                 if (!player.addItem(dropStack)) {
@@ -65,16 +65,15 @@ public class PipeWrenchItem extends Item {
                         case NONE -> ChatFormatting.GRAY;
                     };
 
-                    player.displayClientMessage(
+                    player.sendOverlayMessage(
                         Component.literal(face.name() + ": ")
-                            .append(Component.literal(newMode.name()).withStyle(color, ChatFormatting.BOLD)),
-                        true // true = Action Bar oberhalb der Hotbar!
+                            .append(Component.literal(newMode.name()).withStyle(color, ChatFormatting.BOLD))
                     );
                     return InteractionResult.SUCCESS;
                 }
             }
         }
 
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 }

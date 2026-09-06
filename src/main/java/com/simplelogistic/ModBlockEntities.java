@@ -9,11 +9,11 @@ public class ModBlockEntities {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, SimpleLogistic.MODID);
 
     public static final Supplier<BlockEntityType<PipeBlockEntity>> PIPE_BE = BLOCK_ENTITIES.register("pipe_be", 
-        () -> BlockEntityType.Builder.of((pos, state) -> {
+        () -> new BlockEntityType<>((pos, state) -> {
             PipeBlock block = (PipeBlock) state.getBlock();
             return new PipeBlockEntity(pos, state, block.getTier());
-        }, ModBlocks.ITEM_PIPE.get(), ModBlocks.FLUID_PIPE.get(), ModBlocks.ENERGY_PIPE.get(), ModBlocks.UNIVERSAL_PIPE.get()).build(null));
+        }, ModBlocks.ITEM_PIPE.get(), ModBlocks.FLUID_PIPE.get(), ModBlocks.ENERGY_PIPE.get(), ModBlocks.UNIVERSAL_PIPE.get()));
 
     public static final Supplier<BlockEntityType<DimensionalNodeBlockEntity>> DIMENSIONAL_NODE_BE = BLOCK_ENTITIES.register("dimensional_node_be",
-        () -> BlockEntityType.Builder.of(DimensionalNodeBlockEntity::new, ModBlocks.DIMENSIONAL_NODE.get()).build(null));
+        () -> new BlockEntityType<>(DimensionalNodeBlockEntity::new, ModBlocks.DIMENSIONAL_NODE.get()));
 }

@@ -5,7 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -21,7 +21,7 @@ public record SetFilterSlotPayload(
         ItemStack filterStack
 ) implements CustomPacketPayload {
 
-    public static final Type<SetFilterSlotPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SimpleLogistic.MODID, "set_filter_slot"));
+    public static final Type<SetFilterSlotPayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath(SimpleLogistic.MODID, "set_filter_slot"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SetFilterSlotPayload> STREAM_CODEC = CustomPacketPayload.codec(
             SetFilterSlotPayload::write,

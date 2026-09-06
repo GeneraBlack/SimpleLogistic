@@ -50,7 +50,7 @@ public class PipeMenu extends AbstractContainerMenu {
     private static PipeBlockEntity getAndSyncPipe(Inventory playerInv, BlockPos pos, CompoundTag tag) {
         BlockEntity be = playerInv.player.level().getBlockEntity(pos);
         if (be instanceof PipeBlockEntity pipe) {
-            if (tag != null && playerInv.player.level().isClientSide) {
+            if (tag != null && playerInv.player.level().isClientSide()) {
                 pipe.readFromNbt(tag, playerInv.player.registryAccess());
             }
             return pipe;

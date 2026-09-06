@@ -1,12 +1,12 @@
 package com.simplelogistic;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class DimensionalNodeBlockEntity extends BlockEntity {
 
@@ -51,15 +51,15 @@ public class DimensionalNodeBlockEntity extends BlockEntity {
     }
 
     private static void forceChunk(ServerLevel level, BlockPos pos) {
-        ChunkPos chunkPos = new ChunkPos(pos);
-        level.setChunkForced(chunkPos.x, chunkPos.z, true);
+        ChunkPos chunkPos = ChunkPos.containing(pos);
+        level.setChunkForced(chunkPos.x(), chunkPos.z(), true);
     }
 
     private static void unforceChunkIfLast(ServerLevel level, BlockPos pos) {
-        ChunkPos chunkPos = new ChunkPos(pos);
+        ChunkPos chunkPos = ChunkPos.containing(pos);
 
         // Prüfe ob noch andere Dimensional Nodes in diesem Chunk vorhanden sind
-        var chunk = level.getChunk(chunkPos.x, chunkPos.z);
+        var chunk = level.getChunk(chunkPos.x(), chunkPos.z());
         boolean hasOtherNodes = false;
         for (BlockEntity be : chunk.getBlockEntities().values()) {
             if (be instanceof DimensionalNodeBlockEntity && !be.getBlockPos().equals(pos)) {
@@ -69,21 +69,19 @@ public class DimensionalNodeBlockEntity extends BlockEntity {
         }
 
         if (!hasOtherNodes) {
-            level.setChunkForced(chunkPos.x, chunkPos.z, false);
+            level.setChunkForced(chunkPos.x(), chunkPos.z(), false);
         }
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.putString("Channel", channel);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        output.putString("Channel", channel);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("Channel")) {
-            this.channel = tag.getString("Channel");
-        }
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        this.channel = input.getStringOr("Channel", "default");
     }
 }

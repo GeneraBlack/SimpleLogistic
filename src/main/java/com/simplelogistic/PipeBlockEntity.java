@@ -4,12 +4,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -17,6 +16,9 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.ArrayList;
@@ -153,16 +155,14 @@ public class PipeBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     public void setChanged() {
         super.setChanged();
-        if (level != null && !level.isClientSide) {
+        if (level != null && !level.isClientSide()) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_ALL);
         }
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        CompoundTag tag = new CompoundTag();
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override
@@ -171,71 +171,55 @@ public class PipeBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public void readFromNbt(CompoundTag tag, HolderLookup.Provider registries) {
-        loadAdditional(tag, registries);
+        loadCustomOnly(TagValueInput.create(ProblemReporter.DISCARDING, registries, tag));
     }
 
     public CompoundTag writeToNbt(HolderLookup.Provider registries) {
-        CompoundTag tag = new CompoundTag();
-        saveAdditional(tag, registries);
-        return tag;
+        return saveCustomOnly(registries);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
         for (Direction dir : Direction.values()) {
             List<PipeOperation> ops = operationsMap.get(dir);
             if (ops.isEmpty()) continue;
 
-            ListTag opsListTag = new ListTag();
+            ValueOutput.ValueOutputList opsList = output.childrenList("Operations_" + dir.name());
             for (PipeOperation op : ops) {
-                CompoundTag opTag = new CompoundTag();
-                opTag.putInt("Mode", op.mode.ordinal());
-                opTag.putInt("TransferType", op.type.ordinal());
-                opTag.putInt("TargetSide", op.simulatedTargetSide == null ? -1 : op.simulatedTargetSide.ordinal());
-                opTag.putBoolean("IsWhitelist", op.isWhitelist);
-                opTag.putBoolean("MatchNbt", op.matchNbt);
-                opTag.putInt("RedstoneMode", op.redstoneMode.ordinal());
-                opTag.putInt("Priority", op.priority);
-                opTag.putString("TagFilter", op.tagFilter != null ? op.tagFilter : "");
-                opTag.put("Filter", op.filter.serializeNBT(registries));
-                opsListTag.add(opTag);
+                ValueOutput opOutput = opsList.addChild();
+                opOutput.putInt("Mode", op.mode.ordinal());
+                opOutput.putInt("TransferType", op.type.ordinal());
+                opOutput.putInt("TargetSide", op.simulatedTargetSide == null ? -1 : op.simulatedTargetSide.ordinal());
+                opOutput.putBoolean("IsWhitelist", op.isWhitelist);
+                opOutput.putBoolean("MatchNbt", op.matchNbt);
+                opOutput.putInt("RedstoneMode", op.redstoneMode.ordinal());
+                opOutput.putInt("Priority", op.priority);
+                opOutput.putString("TagFilter", op.tagFilter != null ? op.tagFilter : "");
+                op.filter.serialize(opOutput.child("Filter"));
             }
-            tag.put("Operations_" + dir.name(), opsListTag);
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
         for (Direction dir : Direction.values()) {
             List<PipeOperation> ops = operationsMap.get(dir);
             ops.clear();
-            if (tag.contains("Operations_" + dir.name(), Tag.TAG_LIST)) {
-                ListTag opsListTag = tag.getList("Operations_" + dir.name(), Tag.TAG_COMPOUND);
-                for (int i = 0; i < opsListTag.size(); i++) {
-                    CompoundTag opTag = opsListTag.getCompound(i);
-                    PipeOperation op = new PipeOperation();
-                    op.mode = ConnectionMode.values()[opTag.getInt("Mode")];
-                    op.type = TransferType.values()[opTag.getInt("TransferType")];
-                    int targetOrdinal = opTag.getInt("TargetSide");
-                    op.simulatedTargetSide = targetOrdinal == -1 ? null : Direction.values()[targetOrdinal];
-                    op.isWhitelist = opTag.getBoolean("IsWhitelist");
-                    op.matchNbt = opTag.getBoolean("MatchNbt");
-                    if (opTag.contains("RedstoneMode")) {
-                        op.redstoneMode = RedstoneMode.values()[opTag.getInt("RedstoneMode")];
-                    }
-                    if (opTag.contains("Priority")) {
-                        op.priority = opTag.getInt("Priority");
-                    }
-                    if (opTag.contains("TagFilter")) {
-                        op.tagFilter = opTag.getString("TagFilter");
-                    }
-                    if (opTag.contains("Filter")) {
-                        op.filter.deserializeNBT(registries, opTag.getCompound("Filter"));
-                    }
-                    ops.add(op);
-                }
+            for (ValueInput opInput : input.childrenListOrEmpty("Operations_" + dir.name())) {
+                PipeOperation op = new PipeOperation();
+                op.mode = ConnectionMode.values()[opInput.getIntOr("Mode", 0)];
+                op.type = TransferType.values()[opInput.getIntOr("TransferType", 0)];
+                int targetOrdinal = opInput.getIntOr("TargetSide", -1);
+                op.simulatedTargetSide = targetOrdinal == -1 ? null : Direction.values()[targetOrdinal];
+                op.isWhitelist = opInput.getBooleanOr("IsWhitelist", true);
+                op.matchNbt = opInput.getBooleanOr("MatchNbt", false);
+                op.redstoneMode = RedstoneMode.values()[opInput.getIntOr("RedstoneMode", 0)];
+                op.priority = opInput.getIntOr("Priority", 0);
+                op.tagFilter = opInput.getStringOr("TagFilter", "");
+                opInput.child("Filter").ifPresent(filterInput -> op.filter.deserialize(filterInput));
+                ops.add(op);
             }
         }
     }

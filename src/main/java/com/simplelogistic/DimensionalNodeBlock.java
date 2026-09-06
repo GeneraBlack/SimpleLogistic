@@ -17,8 +17,8 @@ import net.minecraft.world.phys.BlockHitResult;
 
 public class DimensionalNodeBlock extends Block implements EntityBlock {
 
-    public DimensionalNodeBlock() {
-        super(BlockBehaviour.Properties.of().strength(3.5f).requiresCorrectToolForDrops().noOcclusion());
+    public DimensionalNodeBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
@@ -35,23 +35,18 @@ public class DimensionalNodeBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock())) {
-            // Chunk-Forcing aufheben bevor das BlockEntity entfernt wird
-            if (level instanceof ServerLevel serverLevel) {
-                BlockEntity be = level.getBlockEntity(pos);
-                if (be instanceof DimensionalNodeBlockEntity node) {
-                    node.releaseChunk();
-                }
-                NetworkManager.rebuildAllNetworks(serverLevel);
-            }
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean isMoving) {
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof DimensionalNodeBlockEntity node) {
+            node.releaseChunk();
         }
-        super.onRemove(state, level, pos, newState, isMoving);
+        NetworkManager.rebuildAllNetworks(level);
+        super.affectNeighborsAfterRemoval(state, level, pos, isMoving);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof DimensionalNodeBlockEntity node) {
                 ItemStack held = player.getMainHandItem();
@@ -59,22 +54,20 @@ public class DimensionalNodeBlock extends Block implements EntityBlock {
                     // Wenn der Spieler ein umbenanntes Item hält (z.B. Papier "Kanal_Nether"), setze diesen Kanal!
                     String newChannel = held.getHoverName().getString();
                     node.setChannel(newChannel);
-                    player.displayClientMessage(
+                    player.sendOverlayMessage(
                         Component.literal("Dimensional Node Channel set to: ")
-                            .append(Component.literal(newChannel).withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD)),
-                        true
+                            .append(Component.literal(newChannel).withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD))
                     );
                 } else {
                     // Zeige aktuellen Kanal in der Action Bar
-                    player.displayClientMessage(
+                    player.sendOverlayMessage(
                         Component.literal("Dimensional Node [Channel: ")
                             .append(Component.literal(node.getChannel()).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD))
-                            .append(Component.literal("] (Rename an item in Anvil to change)")),
-                        true
+                            .append(Component.literal("] (Rename an item in Anvil to change)"))
                     );
                 }
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 }

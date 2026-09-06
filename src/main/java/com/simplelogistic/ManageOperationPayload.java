@@ -5,7 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -17,7 +17,7 @@ public record ManageOperationPayload(
         int opIndex
 ) implements CustomPacketPayload {
 
-    public static final Type<ManageOperationPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(SimpleLogistic.MODID, "manage_operation"));
+    public static final Type<ManageOperationPayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath(SimpleLogistic.MODID, "manage_operation"));
 
     public static final StreamCodec<FriendlyByteBuf, ManageOperationPayload> STREAM_CODEC = CustomPacketPayload.codec(
             ManageOperationPayload::write,

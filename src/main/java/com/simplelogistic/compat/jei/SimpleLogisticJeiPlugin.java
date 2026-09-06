@@ -9,9 +9,9 @@ import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +19,10 @@ import java.util.List;
 @JeiPlugin
 public class SimpleLogisticJeiPlugin implements IModPlugin {
 
-    public static final ResourceLocation PLUGIN_ID = ResourceLocation.fromNamespaceAndPath(SimpleLogistic.MODID, "jei_plugin");
+    public static final Identifier PLUGIN_ID = Identifier.fromNamespaceAndPath(SimpleLogistic.MODID, "jei_plugin");
 
     @Override
-    public ResourceLocation getPluginUid() {
+    public Identifier getPluginUid() {
         return PLUGIN_ID;
     }
 
@@ -54,7 +54,7 @@ public class SimpleLogisticJeiPlugin implements IModPlugin {
                         @Override
                         public void accept(I ing) {
                             if (ing instanceof ItemStack stack) {
-                                PacketDistributor.sendToServer(new SetFilterSlotPayload(
+                                ClientPacketDistributor.sendToServer(new SetFilterSlotPayload(
                                         gui.getMenu().getPipePos(),
                                         gui.getMenu().getSide(),
                                         gui.getSelectedOpIndex(),

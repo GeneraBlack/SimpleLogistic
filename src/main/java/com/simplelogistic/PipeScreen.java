@@ -1,17 +1,18 @@
 package com.simplelogistic;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 import java.util.List;
 
@@ -43,9 +44,7 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
     private List<Direction> machineDirs = List.of();
 
     public PipeScreen(PipeMenu menu, Inventory playerInv, Component title) {
-        super(menu, playerInv, title);
-        this.imageWidth = PipeMenu.GUI_WIDTH;
-        this.imageHeight = PipeMenu.GUI_HEIGHT;
+        super(menu, playerInv, title, PipeMenu.GUI_WIDTH, PipeMenu.GUI_HEIGHT);
     }
 
     @Override
@@ -218,7 +217,7 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
         this.addRenderableWidget(Button.builder(
             Component.literal("+").withStyle(ChatFormatting.GREEN),
             b -> {
-                PacketDistributor.sendToServer(new ManageOperationPayload(this.menu.getPipePos(), this.menu.getSide(), 0, 0));
+                ClientPacketDistributor.sendToServer(new ManageOperationPayload(this.menu.getPipePos(), this.menu.getSide(), 0, 0));
                 pipe.addOperation(this.menu.getSide());
                 selectedOpIndex = pipe.getOperations(this.menu.getSide()).size() - 1;
                 scheduleRebuild();
@@ -229,7 +228,7 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
             Component.literal("-").withStyle(ChatFormatting.RED),
             b -> {
                 if (pipe.getOperations(this.menu.getSide()).size() > 1) {
-                    PacketDistributor.sendToServer(new ManageOperationPayload(this.menu.getPipePos(), this.menu.getSide(), 1, selectedOpIndex));
+                    ClientPacketDistributor.sendToServer(new ManageOperationPayload(this.menu.getPipePos(), this.menu.getSide(), 1, selectedOpIndex));
                     pipe.removeOperation(this.menu.getSide(), selectedOpIndex);
                     selectedOpIndex = Math.max(0, selectedOpIndex - 1);
                     scheduleRebuild();
@@ -379,7 +378,7 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
     }
 
     private void sendUpdate(PipeBlockEntity.PipeOperation op) {
-        PacketDistributor.sendToServer(new UpdateOperationPayload(
+        ClientPacketDistributor.sendToServer(new UpdateOperationPayload(
                 this.menu.getPipePos(),
                 this.menu.getSide(),
                 selectedOpIndex,
@@ -395,7 +394,13 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean wasHandled) {
+        if (wasHandled) {
+            return true;
+        }
+        double mouseX = event.x();
+        double mouseY = event.y();
+
         // Ghost-Slots Klick-Handling
         PipeBlockEntity pipe = this.menu.getPipe();
         List<PipeBlockEntity.PipeOperation> ops = pipe.getOperations(this.menu.getSide());
@@ -414,7 +419,7 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
 
                         ItemStack ghost = carried.isEmpty() ? ItemStack.EMPTY : carried.copyWithCount(1);
                         op.filter.setStackInSlot(slotIdx, ghost);
-                        PacketDistributor.sendToServer(new SetFilterSlotPayload(
+                        ClientPacketDistributor.sendToServer(new SetFilterSlotPayload(
                                 this.menu.getPipePos(), this.menu.getSide(), selectedOpIndex, slotIdx, ghost));
                         return true;
                     }
@@ -422,13 +427,12 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, wasHandled);
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(g, mouseX, mouseY, partialTick);
-        super.render(g, mouseX, mouseY, partialTick);
+    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(g, mouseX, mouseY, partialTick);
 
         // Ghost-Slots rendern
         PipeBlockEntity pipe = this.menu.getPipe();
@@ -450,22 +454,22 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
                     int slotIdx = r * 3 + c;
                     ItemStack ghost = op.filter.getStackInSlot(slotIdx);
                     if (!ghost.isEmpty()) {
-                        g.renderItem(ghost, slotX, slotY);
-                        g.renderItemDecorations(this.font, ghost, slotX, slotY);
+                        g.item(ghost, slotX, slotY);
+                        g.itemDecorations(this.font, ghost, slotX, slotY);
 
                         if (mouseX >= slotX && mouseX < slotX + 16 && mouseY >= slotY && mouseY < slotY + 16) {
-                            g.renderTooltip(this.font, ghost, mouseX, mouseY);
+                            g.setTooltipForNextFrame(this.font, ghost, mouseX, mouseY);
                         }
                     }
                 }
             }
         }
-
-        this.renderTooltip(g, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(g, mouseX, mouseY, partialTick);
+
         int x = this.leftPos;
         int y = this.topPos;
         int w = this.imageWidth;
@@ -496,7 +500,7 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
         drawBorder(g, invBgX - 4, invBgY - 4, 170, 84, PANEL_BORDER);
     }
 
-    private void drawPanel(GuiGraphics g, int x, int y, int w, int h, String title) {
+    private void drawPanel(GuiGraphicsExtractor g, int x, int y, int w, int h, String title) {
         // Panel Hintergrund
         g.fill(x, y, x + w, y + h, PANEL_BG);
         // Header
@@ -504,10 +508,10 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
         // Rahmen
         drawBorder(g, x, y, w, h, PANEL_BORDER);
         // Titel
-        g.drawString(this.font, title, x + 3, y + 4, 0xCCCCCC, false);
+        g.text(this.font, title, x + 3, y + 4, 0xCCCCCC, false);
     }
 
-    private void drawBorder(GuiGraphics g, int x, int y, int w, int h, int color) {
+    private void drawBorder(GuiGraphicsExtractor g, int x, int y, int w, int h, int color) {
         g.fill(x, y, x + w, y + 1, color);         // Top
         g.fill(x, y + h - 1, x + w, y + h, color);  // Bottom
         g.fill(x, y, x + 1, y + h, color);           // Left
@@ -515,9 +519,9 @@ public class PipeScreen extends AbstractContainerScreen<PipeMenu> {
     }
 
     @Override
-    protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+    protected void extractLabels(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         // Haupttitel oben
-        g.drawString(this.font, "Simple Logistic — Pipe Konfiguration", 8, 4, 0xFFFFFF, false);
+        g.text(this.font, "Simple Logistic — Pipe Konfiguration", 8, 4, 0xFFFFFF, false);
     }
 
     public int getSelectedOpIndex() {
