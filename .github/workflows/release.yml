@@ -9,7 +9,6 @@ on:
 env:
   MINECRAFT_VERSION: '26.2'
   MOD_NAME: 'Simple Logistic'
-  JAVA_VERSION: '25'
 
 permissions:
   contents: write
@@ -22,11 +21,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Java ${{ env.JAVA_VERSION }}
+      - name: Setup Java 25 (Toolchain)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: ${{ env.JAVA_VERSION }}
+          java-version: '25'
+
+      - name: Setup Java 21 (Gradle Runner)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -35,7 +40,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build
-        run: ./gradlew build -x test
+        run: ./gradlew build -x test --info --stacktrace
 
       - name: Extract version from tag
         id: version
